@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
 
     val disposeBag = CompositeDisposable()
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint("MissingInflatedId", "CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -126,8 +126,8 @@ class MainActivity : AppCompatActivity() {
 
             })*/
 
-        val result = Observable.just("Леха", "Toha", "Toha", "Michel",
-            "Vito", "Tom", "Sonny")
+       /* val result = Observable.just("Леха", "Toha", "Toha", "Michel",
+            "Vito", "Tom", "Sonny")*/
             /*.map {
                 if (it.contains('o')) it + " Здоровый"
                 else it + " Больной"
@@ -187,13 +187,13 @@ class MainActivity : AppCompatActivity() {
             .skipLast(1)
             .take(1)
             .takeLast(1)*/
-            .subscribeOn(Schedulers.newThread())
+            /*.subscribeOn(Schedulers.newThread())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 Log.e("MyTag", it)
             }, {
 
-            })
+            })*/
 
             // для ignoreElements():
             /*.doOnComplete{
@@ -220,6 +220,135 @@ class MainActivity : AppCompatActivity() {
             Log.e("MyTag", "Disposed")
             result.dispose()
         }, 2000)*/
+
+        val names = Observable.just("Леха", "Toha", "Michel",
+            "Vito", "Tom", "Sonny")
+        val surnames = Observable.just("Donchich", "Stalune",
+            "Bebricks", "Carleone", "Vivaldi", "Ivanov", "Peppa")
+
+        val temperatureFactoryFirst = Observable.just(120, 11, 90,
+            100, 102)
+        val temperatureFactorySecond = Observable.just(-10, -20,
+            -5, -30)
+
+        val left = Observable
+            .interval(100, TimeUnit.MILLISECONDS)
+
+        val right = Observable
+            .interval(300, TimeUnit.MILLISECONDS)
+
+        names.timeInterval()
+            .subscribe({
+                Log.e("MyTag", "time -> ${it.time()} value -> ${it.value()}")
+            }, {
+
+            })
+
+        // Предоставляет значение по умолчанию, если не пришло ни однгого элемента из потока
+        /*names.skip(6)
+            .defaultIfEmpty("Nothing found")
+            .subscribe({
+                Log.e("MyTag", it)
+            }, {
+
+            })*/
+
+        // count() - считает количество определенных элементов в потоке
+
+        // В данном случае элементы выведутся с задержкой
+        /*names.delay(3, TimeUnit.SECONDS)
+            .subscribe({
+                Log.e("MyTag", it)
+            }, {
+
+            })*/
+
+        // Проверяет, содержит ли поток определенный элемент
+        /*names.contains("Toha")
+            .subscribe({
+                Log.e("MyTag", it.toString())
+            }, {
+
+            })*/
+
+        // Проверяет, удовлетворяют ли ВСЕ данные из нашего потока определенному условию, при этом
+        // возвращая Single
+        /*names.all { it.length > 1 }
+            .subscribe({
+                Log.e("MyTag", it.toString())
+            }, {
+
+            })*/
+
+        // Объединяет два потока в один, при это комбинирует элементы этих потоков
+        /*left.join(right,
+            { t -> Observable.timer(300, TimeUnit.MILLISECONDS) },
+            { t -> Observable.timer(100, TimeUnit.MILLISECONDS) },
+            { t1, t2 ->
+                Log.e("MyTag", "left $t1 right $t2")
+                t1 + t2
+            }
+        ).take(10)
+            .subscribe({
+                Log.e("MyTag", "Result -> $it")
+            }, {
+                Log.e("MyTag", "error $it")
+            })*/
+
+
+        // switchOnNext() - в теории при объединении потока, по истечении определенного промежутка
+        // времени, прекращает исполнение первого потока и переключается на следующий
+
+        // Объединяет два потока, причем сначала выводит элементы первого потока, затем элементы
+        // второго, при этом сохраняя последовательность
+       /* names.concatWith(surnames)
+            .subscribe({
+                Log.e("MyTag", it)
+            }, {
+
+            })*/
+
+        // Объединяет несколько потоков в один, при этом каждый раз выводит самую актуальную
+        // информацию, то есть изменяет объединенный поток, когда какой-то из объединенных потоков
+        // обновляет информацию
+        /*Observable.combineLatest(temperatureFactoryFirst.zipWith(Observable.interval(300L,
+            TimeUnit.MILLISECONDS)){ t1, _ -> t1},
+            temperatureFactorySecond.zipWith(Observable.interval(500L, TimeUnit.MILLISECONDS))
+            { t1, _ -> t1}
+        ) { t1, t2 -> arrayOf(t1, t2) }
+            .subscribe({
+                Log.e("MyTag", "factory one - ${it[0]}, factory two - ${it[1]}")
+            }, {
+
+            })*/
+
+        // Так же объеиняет два потока, но при этом не заботаться о том, чтобы ножидаться элементы,
+        // эмитит их в новый поток по мере возможности, тем самым, в отличие от zip, у нас нет
+        // возможности прописывать логику объединяния двух элементов из разных потоков
+        /*names.zipWith(Observable.interval(300L, TimeUnit.MILLISECONDS)){t1, _ -> t1}
+            .mergeWith(surnames.zipWith(Observable.interval(500L, TimeUnit.MILLISECONDS)){t1, _ -> t1})
+            .subscribe({
+                Log.e("MyTag", it)
+            }, {
+
+            })*/
+
+        // Объединяет несколько потоков в один и выполняет какие-либо действия с ними
+        // В его рамках мы имеем доступ к одному элементу из каждого потока. Если для какого-либо
+        // элемента не нашлось пары, то он опускается
+        /*names.zipWith(surnames, object : BiFunction<String, String, String> {
+            override fun apply(t1: String, t2: String): String {
+                return "$t1 $t2"
+            }
+        })
+        .zipWith(surnames) { t1, t2 ->
+            "$t1 $t2"
+        }
+        .subscribe({
+            Log.e("MyTag", it)
+        }, {
+
+        })*/
     }
 
     override fun onDestroy() {
