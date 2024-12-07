@@ -126,12 +126,12 @@ class MainActivity : AppCompatActivity() {
 
             })*/
 
-       /* val result = Observable.just("Леха", "Toha", "Toha", "Michel",
-            "Vito", "Tom", "Sonny")*/
-            /*.map {
+        val result = Observable.just("Леха", "Toha", "Toha", "Michel",
+            "Vito", "Tom", "Sonny")
+            .map {
                 if (it.contains('o')) it + " Здоровый"
                 else it + " Больной"
-            }*/
+            }
             // Обрабатывает и возвращает элементы НЕ в том порядке, в котором они был заэмичнены
             // изначально, так как операции над ними выполняются параллельно и первым эмитится
             //  тот элемент, над которым flatMap первым закончил обработку
@@ -237,14 +237,45 @@ class MainActivity : AppCompatActivity() {
         val right = Observable
             .interval(300, TimeUnit.MILLISECONDS)
 
-        names.timeInterval()
+        // do-операции исполняются ДО их аналого без do
+        /*names.doOnNext {} // Используется в основном для логирования до того, как был вызван
+            // , например, оператор filter()
+            .doOnSubscribe {}
+            .doOnComplete {} // Вызывает, когда поток завершил свою работу
+            .doOnError {  }
+            .filter { it.length > 5}
+            .subscribe({
+
+            }, {
+
+            })*/
+
+        //Выбрасывает TimeoutException, если поток не успел отработать за определенное время
+        /*names.timeout (300, TimeUnit.MILLISECONDS)
+            .subscribe({
+                Log.e("MyTag", it)
+            }, {
+
+            })*/
+
+
+        // Определеяет, в какое время было заэмичено значение
+        /*names.timestamp()
             .subscribe({
                 Log.e("MyTag", "time -> ${it.time()} value -> ${it.value()}")
             }, {
 
-            })
+            })*/
 
-        // Предоставляет значение по умолчанию, если не пришло ни однгого элемента из потока
+        // Определяет, с каким временным интервалом были получены значения.
+       /* names.timeInterval()
+            .subscribe({
+                Log.e("MyTag", "time -> ${it.time()} value -> ${it.value()}")
+            }, {
+
+            })*/
+
+        // Предоставляет значение по умолчанию, если не пришло ни одного элемента из потока
         /*names.skip(6)
             .defaultIfEmpty("Nothing found")
             .subscribe({
@@ -253,7 +284,7 @@ class MainActivity : AppCompatActivity() {
 
             })*/
 
-        // count() - считает количество определенных элементов в потоке
+            //.count() // - считает количество определенных элементов в потоке
 
         // В данном случае элементы выведутся с задержкой
         /*names.delay(3, TimeUnit.SECONDS)
@@ -280,7 +311,7 @@ class MainActivity : AppCompatActivity() {
 
             })*/
 
-        // Объединяет два потока в один, при это комбинирует элементы этих потоков
+        // Объединяет два потока в один, прим это комбинирует элементы этих потоков
         /*left.join(right,
             { t -> Observable.timer(300, TimeUnit.MILLISECONDS) },
             { t -> Observable.timer(100, TimeUnit.MILLISECONDS) },
@@ -322,7 +353,7 @@ class MainActivity : AppCompatActivity() {
 
             })*/
 
-        // Так же объеиняет два потока, но при этом не заботаться о том, чтобы ножидаться элементы,
+        // Так же объеиняет два потока, но при этом не заботаться о том, чтобы дожидаться элементы,
         // эмитит их в новый поток по мере возможности, тем самым, в отличие от zip, у нас нет
         // возможности прописывать логику объединяния двух элементов из разных потоков
         /*names.zipWith(Observable.interval(300L, TimeUnit.MILLISECONDS)){t1, _ -> t1}
