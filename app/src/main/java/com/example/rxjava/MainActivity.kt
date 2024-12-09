@@ -23,10 +23,16 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.functions.Predicate
 import io.reactivex.rxjava3.schedulers.Schedulers
+import io.reactivex.rxjava3.subjects.AsyncSubject
+import io.reactivex.rxjava3.subjects.BehaviorSubject
+import io.reactivex.rxjava3.subjects.PublishSubject
+import io.reactivex.rxjava3.subjects.ReplaySubject
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.xml.validation.SchemaFactoryLoader
 import kotlin.random.Random as Random
+
+const val TAG = "MyTag"
 
 class MainActivity : AppCompatActivity() {
 
@@ -380,7 +386,178 @@ class MainActivity : AppCompatActivity() {
         }, {
 
         })*/
+
+
+        // Introduction to Subject
+        /*val source1 = Observable.interval(1, TimeUnit.SECONDS).map {
+            it + 1
+        }
+        val source2 = Observable.interval(300, TimeUnit.MILLISECONDS).map {
+            (it + 1) * 300
+        }
+
+        val subject = PublishSubject.create<Long>()
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {
+
+        })
+
+        source1.subscribe(subject)
+        source2.subscribe(subject)*/
+
+
+        // Таким макаром данные не соберутся, так как Subject -- горячий поток данных, а это означает
+        // что в нашем случае, данные сначала заемитятся, а толоко поток начнется их сбор
+        /*val subject = PublishSubject.create<Int>()
+
+        subject.onNext(1)
+        subject.onNext(2)
+        subject.onNext(4)
+        subject.onComplete()
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})*/
+
+
+        // Таким макаром, с помощью behavior, мы позволяем новому подписчику получить последнее
+        // заэмиченное значение
+        /*val subject = BehaviorSubject.create<Int>()
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})
+
+        subject.onNext(1)
+        subject.onNext(2)
+        subject.onNext(4)
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})*/
+
+        // Таким вот макаром мы кеширует ВСЕ данные и новые подписчики их с кайфом получают
+       /* val subject = ReplaySubject.create<Int>()
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})
+
+        subject.onNext(1)
+        subject.onNext(2)
+        subject.onNext(4)
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})*/
+
+        // Вот таким макаром данные передаются только после вызова onComplete, причем только
+        // самое послденее значение
+        /*val subject = AsyncSubject.create<Int>()
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})
+
+        subject.onNext(1)
+        subject.onNext(2)
+        subject.onNext(4)
+        subject.onComplete()*/
+
+        /*val subject = AsyncSubject.create<Int>()
+
+        subject.subscribe({
+            Log.e("MyTag", it.toString())
+        }, {})
+
+        subject.onNext(1)
+        subject.onNext(2)
+        subject.onNext(4)
+        subject.onComplete()*/
+
+
+        // Если вдруг в потке возникла ошибка, то оператор даст шанс попробовать заэмитить данные еще раз
+        // Если в какой-то момент поток отработает без ошибок, он так же передаст неудачные попытки
+        getData()
+            .retry(3)
+            .subscribe({
+                Log.e(TAG, "Get value $it")
+            }, {
+                Log.e(TAG, "Error handled!!! $it")
+            })
+
+        // onErrorReturn -- позволяет поймать ошибку и вернуть какое-либо значине, которое потом попадет
+        // подписчику.
+       /* getData()
+            .onErrorReturn {
+                if (it is IllegalArgumentException) {
+                    12
+                } else 13
+            }
+            .subscribe({
+                Log.e(TAG, "Get value $it")
+            }, {
+                Log.e(TAG, "Error handled!!! $it")
+            })*/
+
+
+        // onErrorResumeNext -- Позволяет создать новый observable, который будет собираться
+        // получателем при возникновении ошибки. При этом ошибка не будет попадать в onError блок
+        // подписчика. Но если в новосозданном observable выбросится ошибка, то она все же прокинется получателю
+        /*getData()
+            .onErrorResumeNext {
+                Observable.create{ subscriber ->
+                    subscriber.onNext(1)
+                    subscriber.onNext(2)
+                    subscriber.onNext(3)
+                    throw IllegalArgumentException()
+                }
+            }
+            .subscribe({
+                Log.e(TAG, "Get value $it")
+        }, {
+            Log.e(TAG, "Error handled!!! $it")
+        })*/
     }
+
+    // Для проверки retry()
+    fun getData(): Observable<Int> {
+        return Observable.create { subscriber ->
+            val list = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
+            list.forEach { element ->
+                subscriber.onNext(element)
+                try {
+                    if (element == 8 && System.currentTimeMillis() % 2 == 0L) {
+                        //throw IllegalArgumentException()
+                        subscriber.onError(IllegalArgumentException())
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error is handled in try block")
+                }
+            }
+        }
+    }
+    // Выводы:
+    // Если отловить ошибку в try блоке, то она не прокинется получателю
+
+   /* fun getData(): Observable<Int> {
+        return Observable.create { subscriber ->
+            val list = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
+            list.forEach { element ->
+                subscriber.onNext(element)
+                try {
+                    if (element > 4) {
+                        //throw IllegalArgumentException()
+                        subscriber.onError(IllegalArgumentException())
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error is handled in try block")
+                }
+            }
+        }
+    }*/
 
     override fun onDestroy() {
         disposeBag.clear()
@@ -419,15 +596,16 @@ class MainActivity : AppCompatActivity() {
         }
     }*/
 
-    fun dataSource(): Maybe<List<Int>> {
+    /*fun dataSource(): Maybe<List<Int>> {
         return Maybe.create { subscriber ->
             subscriber.onSuccess(listOf(1, 2, 3, 4 ,5, 6, 7, 8))
 
             // will return only first element
-            /*for (i in 1..100) {
+            *//*for (i in 1..100) {
                 subscriber.onSuccess(i)
-            }*/
+            }*//*
             subscriber.onComplete()
         }
-    }
+    }*/
+
 }
