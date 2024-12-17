@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.subjects.BehaviorSubject
 import io.reactivex.rxjava3.subjects.PublishSubject
 import io.reactivex.rxjava3.subjects.ReplaySubject
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.xml.validation.SchemaFactoryLoader
 import kotlin.random.Random as Random
@@ -480,13 +481,13 @@ class MainActivity : AppCompatActivity() {
 
         // Если вдруг в потке возникла ошибка, то оператор даст шанс попробовать заэмитить данные еще раз
         // Если в какой-то момент поток отработает без ошибок, он так же передаст неудачные попытки
-        getData()
+        /*getData()
             .retry(3)
             .subscribe({
                 Log.e(TAG, "Get value $it")
             }, {
                 Log.e(TAG, "Error handled!!! $it")
-            })
+            })*/
 
         // onErrorReturn -- позволяет поймать ошибку и вернуть какое-либо значине, которое потом попадет
         // подписчику.
@@ -520,6 +521,305 @@ class MainActivity : AppCompatActivity() {
         }, {
             Log.e(TAG, "Error handled!!! $it")
         })*/
+
+
+        // Повторно эмитит элементы. Каждый элемент будет эмитится столько раз, сколько было прописано
+        // в аргументе функции
+        /*Observable.just(1, 2, 3, 4, 5, 6)
+            .repeat(3)
+            .subscribe ({
+                Log.e(TAG, it.toString())
+            }, {
+
+            })*/
+
+        // retryWhen
+        getData()
+            .retryWhen { errors ->
+                Observable.just(9, 8, 7, 6, 5, 4)
+                /*errors.zipWith(Observable.range(1, 30)) { _, i -> i }
+                    .flatMap { retryCount -> Observable.timer(5, TimeUnit.SECONDS) }*/
+
+            }
+            .subscribe({
+                Log.e(TAG, it.toString())
+            }, {})
+
+        /*val observable = Observable.create{
+            Thread.sleep(100L)
+            it.onNext(1)
+            Thread.sleep(2300L)
+            it.onNext(2)
+            Thread.sleep(1000L)
+            it.onNext(3)
+            Thread.sleep(300L)
+            it.onNext(4)
+        }
+            .flatMap {
+                val delay = Random.nextInt(10)
+                Log.e(TAG, Thread.currentThread().name)
+                Observable.just(it).delay(delay.toLong(), TimeUnit.SECONDS)
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe({
+                Log.e(TAG, it.toString())
+            }, {})*/
+
+        //testFlowable(BackpressureStrategy.MISSING)
+
+
+        //Данный пример наглядно показывает работу ColdObservable
+        /*val observableTest = Observable.create { emitter ->
+            for (i in 1..100) {
+                Thread.sleep(100L)
+                emitter.onNext(i)
+            }
+        }
+
+        val disposableOne = observableTest.subscribeOn(Schedulers.io()).observeOn(Schedulers.io()).subscribe {
+            Log.e(TAG, "Collector1 $it")
+        }
+
+        Thread.sleep(1500L)
+
+        val disposableTwo = observableTest.subscribeOn(Schedulers.io()).observeOn(Schedulers.io()).subscribe {
+            Log.e(TAG, "Collector2 $it")
+        }*/
+
+        // Пример работы HotFlow
+        /*val observableTest = Observable.create { emitter ->
+            for (i in 1..100) {
+                Thread.sleep(100L)
+                emitter.onNext(i)
+            }
+        }.subscribeOn(Schedulers.io()).publish()
+
+        observableTest.connect()
+
+        Thread.sleep(1500L)
+
+        observableTest.observeOn(Schedulers.io()).subscribe {
+            Log.e(TAG, "Collect $it")
+        }
+
+        Thread.sleep(1500L)
+
+        observableTest.observeOn(Schedulers.io()).subscribe {
+            Log.e(TAG, "Collect $it")
+        }*/
+
+        /*val subject = BehaviorSubject.create { emitter ->
+            for (i in 1..5) {
+                Thread.sleep(100L)
+                emitter.onNext(i)
+            }
+        }
+
+        subject.subscribe {
+            Log.e(TAG, "Collecting $it")
+        }*/
+
+        /*Thread.sleep(1500L)
+
+        subject.subscribe {
+            Log.e(TAG, "Collecting $it")
+        }*/
+
+        /*val subject = BehaviorSubject.create<Int>()
+
+        subject.onNext(1)
+        subject.onNext(2)
+        subject.onNext(3)
+
+        subject.subscribe { Log.e(TAG, "Collecting $it") }*/
+
+        /* val subject = BehaviorSubject.create<Int>()
+
+         for (i in 1..5) {
+             Thread.sleep(100L)
+             subject.onNext(i)
+         }
+
+         subject.subscribe {
+             Log.e(TAG, "Collecting $it")
+         }*/
+
+
+
+
+        /*val flowable = BehaviorSubject.create { emitter ->
+            for (i in 1..100) {
+                Thread.sleep(100L)
+                Log.e(TAG, Thread.currentThread().name)
+                emitter.onNext(i)
+            }
+            emitter.onComplete()
+        }*/
+
+        //testFlowable(BackpressureStrategy.LATEST, 10)
+
+        /*createFlowable(BackpressureStrategy.DROP)
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation(), false, 1)
+            .map {
+                Thread.sleep(300L)
+                it
+            }
+            .subscribe({
+                Thread.sleep(100L)
+                Log.d(TAG, "Got $it")
+            }, { error ->
+                throw error
+            })
+        }*/
+
+        // Creating Observable
+        // #1
+        /*val observable = Observable.create {
+            it.onNext(1)
+            it.onNext(2)
+        }*/
+
+        // #2
+        //val observable = Observable.just(1, 2)
+
+        // #3
+        //val observable = Observable.fromIterable(listOf(1, 2))
+
+        // #4
+        //val observable = Observable.fromArray(arrayOf(1, 2))
+
+        // #5
+        //val observable = Observable.range(1, 10)
+
+        // #6
+        //val observable = Observable.interval(1, TimeUnit.SECONDS)
+
+        // #7 //val observable = Observable.timer(5000L, TimeUnit.MILLISECONDS)
+
+        // #8
+        //val observable = Observable.empty<Int>()
+
+        // #9
+        //val observable = Observable.never<Int>()
+
+        // #10
+        //val observable = Observable.error<Throwable>(IllegalArgumentException())
+
+        // #11
+        /*val observable = Observable.defer {
+            Observable.just(1, 2, 3)
+        }*/
+
+        // #12
+        /*val observable = Flowable.just(1, 2, 3)
+            .toObservable()
+
+        observable.subscribe ({
+            Log.d(TAG, it.toString())
+        }, {
+            Log.d(TAG, "Error thrown")
+        }, {
+            Log.e(TAG, "Completed")
+        })
+
+        Thread.sleep(1000L)
+
+        observable.subscribe ({
+            Log.d(TAG, it.toString())
+        }, {
+            Log.d(TAG, "Error thrown")
+        }, {
+            Log.e(TAG, "Completed")
+        })*/
+
+
+        // Думал, что для каждого заэмиченного значения будет выделен свой поток и все будет выполняться
+        // НЕ последовательно, но как оказалось, все выполняется в одном выделенном потоке
+        /*val observable = Observable.create {
+            Thread.sleep(500L)
+            it.onNext(1)
+            Thread.sleep(500L)
+            it.onNext(2)
+            Thread.sleep(500L)
+            it.onNext(3)
+            Log.e(TAG, "Check threading ${Thread.currentThread().name}")
+            Thread.sleep(500L)
+            it.onNext(4)
+        }
+            //.subscribeOn(Schedulers.newThread())
+            //.observeOn(Schedulers.newThread())
+            .map {
+                Log.e(TAG, "The value $it is processed on ${Thread.currentThread().name} thread")
+            }
+            .subscribe({
+                Log.e(TAG, "The value $it is BEBRING on ${Thread.currentThread().name} thread")
+            }, {}, {})*/
+
+
+        val observable = Observable.create {
+            Thread.sleep(500L)
+            it.onNext(1)
+            Thread.sleep(300L)
+            it.onNext(2)
+            Thread.sleep(100L)
+            it.onNext(3)
+            Log.e(TAG, "Emission on thread: ${Thread.currentThread().name}")
+            Thread.sleep(600L)
+            it.onNext(4)
+        }
+
+
+        // Как правило, flatMap предоставляет нам возможность выполнять блокирующие (долгие) операции
+        // асинхронно. Но чтобы для каждого эмита эта самая блокирующая операция происходила асинхронно,
+        // необходимо, чтобы был объявлен observeOn ВНУТРИ .flatMap, ведь наружного объявления, например,
+        // Schedulers.io() недостаточно, так как в таком случае выделится один поток для всех эмитов,
+        // проходящих через flatMap()
+        observable
+            .observeOn(Schedulers.computation())
+            .map {
+                Log.e(TAG, "Mapping on thread: ${Thread.currentThread().name}")
+                it
+            }
+            .flatMap {
+                Log.e(TAG, "Flat mapping on thread: ${Thread.currentThread().name}")
+                Observable
+                    .just(it)
+                    .observeOn(Schedulers.io())
+                    .map {
+                        Thread.sleep(1000L)
+                        Log.e(TAG, "Gud damn new thread: ${Thread.currentThread().name}")
+                        it
+                    }
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe({
+                Log.e(TAG, "Subscription on thread: ${Thread.currentThread().name}")
+                Log.e(TAG, it.toString())
+            }, {})
+
+        /*observable
+            .observeOn(Schedulers.computation())
+            .map {
+                Log.e(TAG, "Mapping on thread: ${Thread.currentThread().name}")
+                it
+            }
+            .concatMap {
+                Log.e(TAG, "Flat mapping on thread: ${Thread.currentThread().name}")
+                Observable
+                    .just(it)
+                    .observeOn(Schedulers.io())
+                    .map {
+                        Thread.sleep(1000L)
+                        Log.e(TAG, "Gud damn new thread: ${Thread.currentThread().name}")
+                        it
+                    }
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe({
+                Log.e(TAG, it.toString())
+                Log.e(TAG, "Subscription on thread: ${Thread.currentThread().name}")
+            }, {})*/
     }
 
     // Для проверки retry()
@@ -529,7 +829,7 @@ class MainActivity : AppCompatActivity() {
             list.forEach { element ->
                 subscriber.onNext(element)
                 try {
-                    if (element == 8 && System.currentTimeMillis() % 2 == 0L) {
+                    if (element == 8 /*&& System.currentTimeMillis() % 2 == 0L*/) {
                         //throw IllegalArgumentException()
                         subscriber.onError(IllegalArgumentException())
                     }
@@ -559,9 +859,75 @@ class MainActivity : AppCompatActivity() {
         }
     }*/
 
+
+
     override fun onDestroy() {
         disposeBag.clear()
         super.onDestroy()
+    }
+
+    private fun createFlowable(strategy: BackpressureStrategy): Flowable<Int> = Flowable.create ({ emitter ->
+        for (i in 1..100) {
+            Thread.sleep(100L)
+            Log.e(TAG, i.toString())
+            emitter.onNext(i)
+        }
+        emitter.onComplete()
+    }, strategy)
+
+    private fun doWorkBlocking(i: Int, delay: Long): Int {
+        Thread.sleep(delay)
+        return i
+    }
+
+    private fun returnObservable(): Observable<Int> = Observable.create { emitter ->
+        for (i in 1..100) {
+            Thread.sleep(100L)
+            emitter.onNext(i)
+        }
+        emitter.onComplete()
+    }
+
+    private fun flowable(
+        delay: Long,
+        backpressureStrategy: BackpressureStrategy,
+        limit: Int
+    ): Flowable<Int> = Flowable.create({ emitter ->
+        Log.e(TAG, Thread.currentThread().name)
+        for (i in 1..limit) {
+            Thread.sleep(delay)
+            emitter.onNext(i)
+        }
+        emitter.onComplete()
+    }, backpressureStrategy)
+
+    @SuppressLint("CheckResult")
+    private fun testFlowable(
+        mode: BackpressureStrategy,
+        limit: Int = 10
+    ) {
+        val latch = CountDownLatch(1)
+        val stringBuffer = StringBuffer()
+        val time = System.currentTimeMillis()
+
+        flowable(delay = 100, backpressureStrategy = mode, limit = limit)
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.computation(), false, 1)
+            .map {
+                Log.e(TAG, Thread.currentThread().name)
+                doWorkBlocking(i = it, delay = 200)
+            }
+            .map { doWorkBlocking(i = it, delay = 300) }
+            .doOnComplete { latch.countDown() }
+            .subscribe {
+                Log.e(TAG, it.toString())
+                stringBuffer.append("$it ")
+            }
+
+        latch.await()
+
+        Log.e(TAG, (System.currentTimeMillis() - time).toString())
+        Log.e(TAG, stringBuffer.toString())
     }
 
     /*fun dataSource(): Flowable<Int> {
